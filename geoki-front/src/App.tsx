@@ -1,40 +1,59 @@
 import { useEffect, useState } from "react";
-import SpeechToText from "./services/SpeechToText";
-import './App.css'
+import "./App.css";
+import SelectDepartment from "./SelectDepartment";
+import SynchroPage from "./SynchroPage";
+import SocketIOService from "./SocketIOService";
+import { Socket } from "socket.io-client";
+import ChatPage from "./ChatPage";
+
+enum State {
+  Initial = "initialState",
+  Synchro = "synchroState",
+  Starting = "startingState",
+  Running = "runningState",
+  Finish = "finishState",
+}
+
+type Department = {
+  name: string;
+  code: string;
+};
+
 
 function App() {
 
-  const [transcription, setTranscription] = useState<string>("");
-  const [speaking, setSpeaking] = useState<boolean>(false);
+  const socketService = new SocketIOService("http://127.0.0.1:5000");
 
-  
-  useEffect(() => {
-    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
-      const speechRecognition = new SpeechToText()
-      speechRecognition.start()
-      speechRecognition.onresult = (event: SpeechRecognitionEvent) => {
-        setTranscription( transcription + event.results[event.results.length - 1][0].transcript);
-        setSpeaking(false);
-      }
-      speechRecognition.onspeechstart = () => {
-        setSpeaking(true);
-      }
-      speechRecognition.onspeechend = () => {
-        setSpeaking(false);
-      }
-    } else {
-        console.error("SpeechRecognition API is not supported in this browser.");
+  const [state, setState] = useState(State.Running);
+  const [department, setDepartment] = useState<Department>();
+  const [contentPage, setContentPage] = useState<any>();
+  const [socket, setSocket] = useState<Socket>(socketService.connect());
+
+  const updateContentPage = (): any => {
+    switch (state) {
+      case State.Synchro:
+        setContentPage(<SynchroPage ></SynchroPage>);
+        break;
+      case State.Running:
+        setContentPage(<ChatPage></ChatPage>)
+        break;
+      default:
+        setContentPage(<SelectDepartment socket={socket} setDepartment={setDepartment} />);
+        break;
     }
-  }, [])
-  
+  };
 
+  useEffect(() => {
+    updateContentPage()
+  }, [state]);
+  
   return (
-      <>
-        <div className={`speaking-block ${speaking && "active"}`}>
-          <img src="micro.png" alt="microphone" />
-        </div>
-        <h2>Transcription: {transcription}</h2>
-      </>
+    <>
+      <div>
+        <img src="logo.png" alt="logo" className="logo" />
+        {contentPage}
+      </div>
+    </>
   );
 }
 

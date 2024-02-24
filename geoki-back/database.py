@@ -109,7 +109,6 @@ class Database:
             with open(file_path, "wb") as f:
                 f.write(self.resource_fetcher.fetch_resource_file(name))
 
-        # Compter le nombre total de lignes dans le fichier CSV
         total_lines = sum(1 for line in open(file_path, "r", encoding="utf-8"))
 
         print(f"Total lignes: {total_lines}") 
@@ -152,7 +151,7 @@ class Database:
             print("Certaines informations nécessaires sont manquantes dans la ligne CSV.")
             return None, None
         
-        print( "%s, %s, %s, %s" % (name, type, longitude, latitude))
+        ## print( "%s, %s, %s, %s" % (name, type, longitude, latitude))
         
         x, y = self.postion_converter.convert_lat_lon_to_xy(longitude, latitude)
         
@@ -167,11 +166,24 @@ class Database:
         
     def filter_words(self, words):
         filtered_words = []
+        type= None
         for word in words:
             word = word.lower()
             if len(word) >= 2 and not word.isdigit() and word not in IGNORED_WORDS:
-                filtered_words.append(word)
-        return filtered_words
+                if word in self.get_distinct_types() and type is None:
+                    type = word
+                else:
+                    filtered_words.append(word)
+        return filtered_words, type
+    
+    def get_distinct_types(self):
+        distinct_types = set()
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT DISTINCT type FROM point_of_interest") 
+        rows = cursor.fetchall()
+        for row in rows:
+            distinct_types.add(row.type)
+        return distinct_types
 
     def insert_in_dictionary(self, reference_id, name):
         filtered_words = self.filter_words(self.split_name( name))
@@ -195,3 +207,44 @@ class Database:
                     INSERT INTO dictionnary_reference (dictionary_id, reference_id)
                     VALUES (?, ? )''',
                     (dictionary_id, reference_id ))
+                
+    def search_poi_within_radius_with_keywords(self, center_lat=None, center_lon=None, radius=100, keywords=None):
+        self.open_connection()
+        query = """
+            SELECT poi.id, poi.name, poi.type, poi.longitude, poi.latitude
+            FROM point_of_interest poi
+            JOIN dictionnary_reference dr ON poi.id = dr.reference_id
+            JOIN dictionnary d ON dr.dictionary_id = d.id
+            WHERE 1=1
+        """
+        params = []
+
+        if center_lat is not None and center_lon is not None and radius is not None:
+            query += """
+                AND 6371000 * 2 * ASIN(SQRT(
+                    POWER(SIN((RADIANS(poi.latitude) - RADIANS(?)) / 2), 2) +
+                    COS(RADIANS(?)) * COS(RADIANS(poi.latitude)) *
+                    POWER(SIN((RADIANS(poi.longitude) - RADIANS(?)) / 2), 2)
+                )) <= ?
+            """
+            params.extend([center_lat, center_lat, center_lon, radius])
+
+        if keywords:
+            keywords, type = self.filter_words(self.split_name(keywords))
+            if keywords:
+                keywords = [f"%{word}%" for word in keywords]
+                query += " AND (d.word LIKE ? "
+                for i in range(1, len(keywords)):
+                    query += "OR d.word LIKE ? "
+                query += ")"
+                params.extend(keywords)  # Ajouter les paramètres correspondants ici
+
+        if type:
+            query += " AND poi.type = ?"
+            params.append(type)
+
+        self.cursor.execute(query, params)
+        responses = self.cursor.fetchall()
+        self.close()
+
+        return responses

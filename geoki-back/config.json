@@ -18,7 +18,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "scolaire",
-      "done": false,
+      "done": true,
       "schema": {
         "name_col": 1,
         "type_col": 19,
@@ -34,7 +34,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "administration",
-      "done": false,
+      "done": true,
       "schema": {
         "name_col": 4,
         "type_col": 3,
@@ -49,7 +49,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "culturel",
-      "done": false,
+      "done": true,
       "schema": {
         "name_col": 1,
         "type_col": 9,
@@ -64,7 +64,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "gare",
-      "done": false,
+      "done": true,
       "schema": {
         "name_col": 4,
         "type_col": null,
@@ -79,7 +79,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "hopital",
-      "done": false,
+      "done": true,
       "schema": {
         "name_col": 2,
         "type_col": null,
@@ -94,7 +94,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "poste",
-      "done": false,
+      "done": true,
       "schema": {
         "name_col": 0,
         "type_col": 1,
@@ -109,7 +109,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "pharmacie",
-      "done": false,
+      "done": true,
       "schema": {
         "name_col": 1,
         "type_col": null,
@@ -124,7 +124,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "police",
-      "done": false,
+      "done": true,
       "schema": {
         "name_col": 0,
         "type_col": null,
@@ -139,7 +139,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "sport",
-      "done": false,
+      "done": true,
       "schema": {
         "name_col": 2,
         "type_col": 9,

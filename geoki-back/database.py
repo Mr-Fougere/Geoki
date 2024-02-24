@@ -1,14 +1,23 @@
 from datetime import datetime
 from flask_socketio import SocketIO
-import json
+import requests
+import gzip
 import re
 import csv
 import pyodbc 
-from resource_fetcher import ResourceFetcher
-from position_converter import PositionConverter
-import os
 
+# Establish a connection to the database
 
+DEPARTMENT_ADRESSES_CSV = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-"
+ADRESS_ROW_SIZE = 23
+LAT_COL= 13
+LON_COL = 12
+POSTAL_CODE_COL = 5
+INSEE_CODE_COL = 6
+STREET_COL = 4
+NUMBER_COL = 2
+SUBDIVISION_COL = 3
+TOWN_COL = 7
 IGNORED_WORDS = ["le", "la", "les", "des", "de", "du", "un", "une", "au", "aux", "ce", "cette", "ces", "mon", "ma", "mes", "ton", "ta", "tes", "son", "sa", "ses", "notre", "nos", "votre", "vos", "leur", "leurs"]
 
 class Database:
@@ -16,18 +25,9 @@ class Database:
         self.conn = None
         self.cursor = None
         self.socket = socket
-        self.resource_fetcher = ResourceFetcher()
-        self.postion_converter = PositionConverter()
-        self.resources = self.load_config()
         self.open_connection()
         self.create_tables()
-        self.fetch_resources()
         self.close()
-
-    def load_config(self):
-        with open( "config.json", 'r') as f:
-            config_data = json.load(f)
-            return config_data.get('resources', [])
 
     def commit(self):
         self.conn.commit()
@@ -45,10 +45,43 @@ class Database:
 
     def create_tables(self):
         print("Creating tables...")
+        self.create_street_table()
+        self.create_addresses_table()
         self.create_point_of_interest_table()
         self.create_dictionary_table()
         self.create_dictionary_references_table()
         self.commit()
+
+    def create_street_table(self):
+        self.cursor.execute('''
+            IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'street')
+            BEGIN
+                CREATE TABLE street (
+                    id INT IDENTITY(1,1) PRIMARY KEY,
+                    town NVARCHAR(255) NOT NULL,
+                    postal_code NVARCHAR(255) NOT NULL,
+                    insee_code NVARCHAR(255),
+                    name NVARCHAR(255) NOT NULL
+                );
+            END
+        ''')
+
+    def create_addresses_table(self):
+        self.cursor.execute('''
+            IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'address')
+            BEGIN
+                CREATE TABLE address (
+                    id INT IDENTITY(1,1) PRIMARY KEY,
+                    street_id INT NOT NULL,
+                    number NVARCHAR(255) NOT NULL,
+                    subdivision NVARCHAR(255),
+                    habitation_type NVARCHAR(255),
+                    longitude FLOAT,
+                    latitude FLOAT,
+                    FOREIGN KEY (street_id) REFERENCES Street (id)
+                );
+            END
+        ''')
 
     def create_point_of_interest_table(self):
         self.cursor.execute('''
@@ -58,10 +91,8 @@ class Database:
                     id INT IDENTITY(1,1) PRIMARY KEY,
                     name NVARCHAR(255) NOT NULL,
                     type NVARCHAR(255) NOT NULL,
-                    longitude FLOAT,
-                    latitude FLOAT,
-                    x float,
-                    y float
+                    address_id INT NOT NULL,
+                    FOREIGN KEY (address_id) REFERENCES Address (id)
                 );
             END
         ''')
@@ -85,116 +116,109 @@ class Database:
                     id INT IDENTITY(1,1) PRIMARY KEY,
                     dictionary_id INT NOT NULL,
                     reference_id INT NOT NULL,
+                    reference_type NVARCHAR(255) NOT NULL,
                     FOREIGN KEY (dictionary_id) REFERENCES Dictionnary (id)
                 );
             END
         ''')
 
     def create_indexes(self):
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_town ON street (town)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_word ON dictionnary (word)")
-        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_word ON point_of_interest (type)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_postal ON street (postal_code)")
+        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_insee ON street (insee_code)")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_dic ON dictionnary_reference (dictionary_id)")
 
-    def fetch_resources(self):
-        for resource in self.resources:
-            if(resource['done'] == False and resource["resource_type"] == "poi"):
-                #print(resource)
-                self.fetch_one_resource(resource)
+    def fetch_departments_adresses(self, departments: list):
+        for department in departments:
+            try:
+                department_number = int(department)
+                print(f"Department number: {department_number}")
+                self.fetch_one_department_adresses(department_number)
+            except ValueError:
+                print(f"Invalid department number: {department}")
 
-    def fetch_one_resource(self, resource):
-        name = resource['resource_name']
-        file_path = f"downloads/{name}.csv"
+    def fetch_one_department_adresses(self, department: int):
+        department_number = str(department).zfill(2)
+        department_file =  f"{DEPARTMENT_ADRESSES_CSV}{department_number}.csv.gz"
+        response = requests.get(department_file)
+        with open(f"downloads/{department_number}.csv.gz", "wb") as f:
+            f.write(response.content)
 
-        if not os.path.exists(file_path):
-            with open(file_path, "wb") as f:
-                f.write(self.resource_fetcher.fetch_resource_file(name))
+        with gzip.open(f"downloads/{department_number}.csv.gz", "rb") as f_in:
+            with open(f"converts/{department_number}.csv", "wb") as f_out:
+                f_out.write(f_in.read())
 
-        total_lines = sum(1 for line in open(file_path, "r", encoding="utf-8"))
+        total_lines = 0
+        with open(f"converts/{department_number}.csv", "r", encoding="utf-8") as csvfile:
+            csvreader = csv.reader(csvfile)
+            for row in csvreader:
+                total_lines += 1
 
-        print(f"Total lignes: {total_lines}") 
-
+        self.socket.emit('fetching_infos', {'total_lines': total_lines})
         self.open_connection()
-        self.parse_csv(resource, total_lines)
+        self.parse_csv(department_number, total_lines)
         self.close()
 
-    def parse_csv(self,resource,total_lines):
-        name= resource['resource_name']
-        with open(f"downloads/{name}.csv", "r", encoding="utf-8") as csvfile:
+    def parse_csv(self,department_number,total_lines):
+        with open(f"converts/{department_number}.csv", "r", encoding="utf-8") as csvfile:
             csvreader = csv.reader(csvfile, delimiter=';')
             next(csvreader)
             current_line = 0
             for row in csvreader:
                 current_line += 1
-                adresse_id, name = self.insert_point_of_intereset(row, resource)
-                if adresse_id is None:
-                    continue
+                adresse_id = self.insert_address(row)
                 print(f"{current_line}/{total_lines}")
-                self.insert_in_dictionary(adresse_id, name)
+                self.insert_in_dictionary(row, adresse_id, "adress")
                 self.commit()
 
-    def insert_point_of_intereset(self, row, resource):
-        schema = resource['schema']
-        name = row[schema['name_col']]
-        if  schema['type_col'] == None:
-            type = resource["resource_name"]
-        else:
-            type =  row[schema['type_col']]
-        longitude = row[schema['longitude_col']]
-        parts = longitude.split(',')
-        if len(parts) > 1:
-            latitude = parts[0]
-            longitude = parts[1]
-        else:
-            latitude =  row[schema['latitude_col']]
-
-        if not all([name, type, longitude, latitude]):
-            print("Certaines informations nécessaires sont manquantes dans la ligne CSV.")
-            return None, None
-        
-        ## print( "%s, %s, %s, %s" % (name, type, longitude, latitude))
-        
-        x, y = self.postion_converter.convert_lat_lon_to_xy(longitude, latitude)
-        
-        self.cursor.execute('''INSERT INTO point_of_interest (name, type, longitude, latitude, x, y) output inserted.ID 
-                    VALUES (?, ?, ?, ?, ?, ?)''', (name, type, longitude, latitude, x, y))
+    def insert_address(self, row):
+        if len(row) != ADRESS_ROW_SIZE:
+            return
+        street_id = self.get_or_create_street(row)
+        self.cursor.execute('''INSERT INTO address (street_id, number, subdivision, longitude, latitude, habitation_type) output inserted.ID 
+                    VALUES (?, ?, ?, ?, ?, ?)''', (street_id, row[NUMBER_COL], row[SUBDIVISION_COL], row[LON_COL], row[LAT_COL], None))
         last_row_id = self.cursor.fetchone()[0]
+    
+        return last_row_id
 
-        return last_row_id, name
-         
-    def split_name(self, street_name):
+    def get_or_create_street(self, row):
+        street_name = row[STREET_COL]
+        postal_code = row[POSTAL_CODE_COL]
+        town = row[TOWN_COL]
+        self.cursor.execute("SELECT id FROM street WHERE name = ? AND postal_code = ? AND town = ?", (street_name, postal_code, town))
+        existing_street = self.cursor.fetchone()
+        if existing_street:
+            return existing_street[0] 
+        else:
+            insee = row[INSEE_CODE_COL]
+            self.cursor.execute('''INSERT INTO street (name, postal_code, town, insee_code) output inserted.ID 
+                                VALUES (?, ?, ?, ?)''', (street_name, postal_code, town, insee))
+            last_row_id = self.cursor.fetchone()[0]
+            return last_row_id
+
+        
+    def split_street_name(self, street_name):
         return re.split(r'[\s_\'°-]', street_name)
         
     def filter_words(self, words):
         filtered_words = []
-        type= None
         for word in words:
             word = word.lower()
             if len(word) >= 2 and not word.isdigit() and word not in IGNORED_WORDS:
-                if word in self.get_distinct_types() and type is None:
-                    type = word
-                else:
-                    filtered_words.append(word)
-        return filtered_words, type
-    
-    def get_distinct_types(self):
-        distinct_types = set()
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT DISTINCT type FROM point_of_interest") 
-        rows = cursor.fetchall()
-        for row in rows:
-            distinct_types.add(row.type)
-        return distinct_types
+                filtered_words.append(word)
+        return filtered_words
 
-    def insert_in_dictionary(self, reference_id, name):
-        filtered_words = self.filter_words(self.split_name( name))
+    def insert_in_dictionary(self, row, reference_id, reference_type):
+        filtered_words = self.filter_words(self.split_street_name( row[STREET_COL]) + self.split_street_name( row[TOWN_COL]))
         for word in filtered_words:
             self.cursor.execute("SELECT id FROM dictionnary WHERE word = ?", (word,))
             existing_word = self.cursor.fetchone()
             if existing_word:
                 self.cursor.execute('''
-                    INSERT INTO dictionnary_reference (dictionary_id, reference_id)
-                    VALUES (?, ?)''',
-                    (existing_word[0], reference_id ))
+                    INSERT INTO dictionnary_reference (dictionary_id, reference_id, reference_type)
+                    VALUES (?, ?, ?)''',
+                    (existing_word[0], reference_id,reference_type ))
             else:
                 self.cursor.execute('''
                     INSERT INTO dictionnary (word)
@@ -204,47 +228,53 @@ class Database:
                 dictionary_id = self.cursor.fetchone()[0]
                 
                 self.cursor.execute('''
-                    INSERT INTO dictionnary_reference (dictionary_id, reference_id)
-                    VALUES (?, ? )''',
-                    (dictionary_id, reference_id ))
-                
-    def search_poi_within_radius_with_keywords(self, center_lat=None, center_lon=None, radius=100, keywords=None):
+                    INSERT INTO dictionnary_reference (dictionary_id, reference_id, reference_type)
+                    VALUES (?, ?, ?  )''',
+                    (dictionary_id, reference_id, reference_type ))
+
+    def find_addresses_by_keywords(self, search_criteria):
         self.open_connection()
-        query = """
-            SELECT poi.id, poi.name, poi.type, poi.longitude, poi.latitude
-            FROM point_of_interest poi
-            JOIN dictionnary_reference dr ON poi.id = dr.reference_id
-            JOIN dictionnary d ON dr.dictionary_id = d.id
-            WHERE 1=1
-        """
-        params = []
+        search_street = search_criteria.get("street", "")
+        search_number = search_criteria.get("number")
+        search_town = search_criteria.get("town")
 
-        if center_lat is not None and center_lon is not None and radius is not None:
-            query += """
-                AND 6371000 * 2 * ASIN(SQRT(
-                    POWER(SIN((RADIANS(poi.latitude) - RADIANS(?)) / 2), 2) +
-                    COS(RADIANS(?)) * COS(RADIANS(poi.latitude)) *
-                    POWER(SIN((RADIANS(poi.longitude) - RADIANS(?)) / 2), 2)
-                )) <= ?
-            """
-            params.extend([center_lat, center_lat, center_lon, radius])
+        street_keywords = self.filter_words(self.split_street_name( search_street))
+        references = []
+        for keyword in street_keywords:
+            self.cursor.execute('''
+                SELECT reference_id FROM DictionnaryReference
+                INNER JOIN Dictionnary ON DictionnaryReference.dictionary_id = Dictionnary.id
+                WHERE Dictionnary.word = ?
+            ''', (keyword,))
+            result = self.cursor.fetchall()
+            references.extend(result)
 
-        if keywords:
-            keywords, type = self.filter_words(self.split_name(keywords))
-            if keywords:
-                keywords = [f"%{word}%" for word in keywords]
-                query += " AND (d.word LIKE ? "
-                for i in range(1, len(keywords)):
-                    query += "OR d.word LIKE ? "
-                query += ")"
-                params.extend(keywords)  # Ajouter les paramètres correspondants ici
+        references = [reference[0] for reference in references]
 
-        if type:
-            query += " AND poi.type = ?"
-            params.append(type)
+        grouped_references = {}
+        for reference in references:
+            grouped_references[reference] = grouped_references.get(reference, 0) + 1
+        sorted_references = sorted(grouped_references.items(), key=lambda x: x[1], reverse=True)
+        print(grouped_references)
+        addresses = []
 
-        self.cursor.execute(query, params)
-        responses = self.cursor.fetchall()
+        for reference_id, _ in sorted_references:
+            print(reference_id)
+            reference_id = int(reference_id) 
+            self.cursor.execute("SELECT town, number FROM Adresse WHERE id = ?", (reference_id,))
+            result = self.cursor.fetchone()
+            if result:
+                town, number = result
+                if (not town or town.lower() == reference_town.lower()) and (not search_number or search_number == reference_number):
+                    self.cursor.execute("SELECT street FROM Adresse WHERE id = ?", (reference_id,))
+                    street_result = self.cursor.fetchone()
+                    if street_result and street_result[0] not in [address.get("street") for address in addresses]:
+                        self.cursor.execute("SELECT * FROM Adresse WHERE id = ?", (reference_id,))
+                        address_result = self.cursor.fetchone()
+                        addresses.append(address_result)
+
+            if len(addresses) >= 20:
+                break
+
         self.close()
-
-        return responses
+        return addresses

@@ -8,8 +8,7 @@
       "url_file": "https://www.data.gouv.fr/fr/datasets/r/7b4bc207-4e66-49d2-b1a5-26653e369b66",
       "format": "json",
       "resource_type": "adresse",
-      "resource_name": "departement",
-      "done": true
+      "resource_name": "departement"
     },
     {
       "name": "Etablissements scolaires",
@@ -18,11 +17,15 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "scolaire",
-      "done": true,
       "schema": {
         "name_col": 1,
+        "street_col": 5,
+        "number_col": 5,
+        "town_col": 10,
+        "insee_col": 25,
+        "postal_col": 8,
         "type_col": 19,
-        "longitude_col": 15,
+        "longitude_col": 13,
         "latitude_col": 14
       }
     },
@@ -34,9 +37,13 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "administration",
-      "done": true,
       "schema": {
         "name_col": 4,
+        "street_col": 10,
+        "number_col": 10,
+        "town_col": 10,
+        "insee_col": 2,
+        "postal_col": 11,
         "type_col": 3,
         "longitude_col": 13,
         "latitude_col": 12
@@ -49,12 +56,16 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "culturel",
-      "done": true,
       "schema": {
         "name_col": 1,
+        "street_col": 3,
+        "number_col": 4,
+        "town_col": 5,
+        "insee_col": 6,
+        "postal_col": 4,
         "type_col": 9,
-        "longitude_col": 49,
-        "latitude_col": 48
+        "longitude_col": 48,
+        "latitude_col": 47
       }
     },
     {
@@ -64,9 +75,13 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "gare",
-      "done": true,
       "schema": {
         "name_col": 4,
+        "street_col": null,
+        "number_col": null,
+        "town_col": 7,
+        "insee_col": null,
+        "postal_col": 5,
         "type_col": null,
         "longitude_col": 10,
         "latitude_col": 11
@@ -79,9 +94,13 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "hopital",
-      "done": true,
       "schema": {
         "name_col": 2,
+        "street_col": 9,
+        "number_col": 6,
+        "town_col": 14,
+        "insee_col": null,
+        "postal_col": 14,
         "type_col": null,
         "longitude_col": 28,
         "latitude_col": 29
@@ -94,12 +113,16 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "poste",
-      "done": true,
       "schema": {
         "name_col": 0,
+        "street_col": 2,
+        "number_col": 2,
+        "town_col": 7,
+        "insee_col": null,
+        "postal_col": 6,
         "type_col": 1,
-        "longitude_col": 9,
-        "latitude_col": 8
+        "longitude_col": 10,
+        "latitude_col": 9
       }
     },
     {
@@ -109,9 +132,13 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "pharmacie",
-      "done": true,
       "schema": {
         "name_col": 1,
+        "street_col": 2,
+        "number_col": 2,
+        "town_col": 5,
+        "insee_col": null,
+        "postal_col": 4,
         "type_col": null,
         "longitude_col": 9,
         "latitude_col": 8
@@ -124,9 +151,13 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "police",
-      "done": true,
       "schema": {
         "name_col": 0,
+        "street_col": 5,
+        "number_col": 5,
+        "town_col": 7,
+        "insee_col": 4,
+        "postal_col": 6,
         "type_col": null,
         "longitude_col": 11,
         "latitude_col": 12
@@ -135,13 +166,17 @@
     {
       "name": "Equipement sportif",
       "url_ref": "https://www.data.gouv.fr/fr/datasets/les-installations-sportives-d-ile-de-france-idf/",
-      "url_file": "https://www.data.gouv.fr/fr/datasets/r/09840541-a11c-4a6b-a78b-c40b93171e82",
+      "url_file": "https://www.data.gouv.fr/fr/datasets/r/2cb2f356-42b2-4195-a35c-d4e4d986c62b",
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "sport",
-      "done": true,
       "schema": {
         "name_col": 2,
+        "street_col": null,
+        "number_col": null,
+        "town_col": 3,
+        "insee_col": 4,
+        "postal_col": null,
         "type_col": 9,
         "longitude_col": 0,
         "latitude_col": 0

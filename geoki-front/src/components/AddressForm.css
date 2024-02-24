@@ -1,0 +1,57 @@
+.address-form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .title {
+    font-size: 0.5em;
+    font-weight: bold;
+    margin-bottom: 0.5em;
+  }
+  
+  .address-form {
+    background-color: grey;
+    padding: 1em;
+    border-radius: 4px;
+  }
+  
+  .form-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5em;
+  }
+  
+  .form-row label {
+    display: flex;
+    flex-direction: column;
+    margin-right: 1em;
+  }
+  
+  .form-row label:last-child {
+    margin-right: 0;
+  }
+  
+  .input-field {
+    margin-bottom: 1em;
+  }
+  
+  /* Ajustez les tailles selon vos besoins */
+input[type="text"] {
+    padding: 0.5em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+  
+button {
+    padding: 0.5em 1em;
+    background-color: blue;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+  
+button:hover {
+    background-color: darkblue;
+}  

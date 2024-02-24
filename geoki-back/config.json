@@ -21,11 +21,6 @@
       "done": false,
       "schema": {
         "name_col": 1,
-        "street_col": 5,
-        "number_col": 5,
-        "town_col": 10,
-        "insee_col": 25,
-        "postal_col": 8,
         "type_col": 19,
         "longitude_col": 15,
         "latitude_col": 14
@@ -42,11 +37,6 @@
       "done": false,
       "schema": {
         "name_col": 4,
-        "street_col": 10,
-        "number_col": 10,
-        "town_col": 10,
-        "insee_col": 2,
-        "postal_col": 11,
         "type_col": 3,
         "longitude_col": 13,
         "latitude_col": 12
@@ -62,11 +52,6 @@
       "done": false,
       "schema": {
         "name_col": 1,
-        "street_col": 3,
-        "number_col": 4,
-        "town_col": 5,
-        "insee_col": 6,
-        "postal_col": 4,
         "type_col": 9,
         "longitude_col": 49,
         "latitude_col": 48
@@ -82,11 +67,6 @@
       "done": false,
       "schema": {
         "name_col": 4,
-        "street_col": null,
-        "number_col": null,
-        "town_col": 7,
-        "insee_col": null,
-        "postal_col": 5,
         "type_col": null,
         "longitude_col": 10,
         "latitude_col": 11
@@ -102,11 +82,6 @@
       "done": false,
       "schema": {
         "name_col": 2,
-        "street_col": 9,
-        "number_col": 6,
-        "town_col": 14,
-        "insee_col": null,
-        "postal_col": 14,
         "type_col": null,
         "longitude_col": 28,
         "latitude_col": 29
@@ -122,11 +97,6 @@
       "done": false,
       "schema": {
         "name_col": 0,
-        "street_col": 2,
-        "number_col": 2,
-        "town_col": 7,
-        "insee_col": null,
-        "postal_col": 6,
         "type_col": 1,
         "longitude_col": 9,
         "latitude_col": 8
@@ -142,11 +112,6 @@
       "done": false,
       "schema": {
         "name_col": 1,
-        "street_col": 2,
-        "number_col": 2,
-        "town_col": 5,
-        "insee_col": null,
-        "postal_col": 4,
         "type_col": null,
         "longitude_col": 9,
         "latitude_col": 8
@@ -162,11 +127,6 @@
       "done": false,
       "schema": {
         "name_col": 0,
-        "street_col": 5,
-        "number_col": 5,
-        "town_col": 7,
-        "insee_col": 4,
-        "postal_col": 6,
         "type_col": null,
         "longitude_col": 11,
         "latitude_col": 12
@@ -182,11 +142,6 @@
       "done": false,
       "schema": {
         "name_col": 2,
-        "street_col": null,
-        "number_col": null,
-        "town_col": 3,
-        "insee_col": 4,
-        "postal_col": null,
         "type_col": 9,
         "longitude_col": 0,
         "latitude_col": 0

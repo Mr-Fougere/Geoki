@@ -8,7 +8,8 @@
       "url_file": "https://www.data.gouv.fr/fr/datasets/r/7b4bc207-4e66-49d2-b1a5-26653e369b66",
       "format": "json",
       "resource_type": "adresse",
-      "resource_name": "departement"
+      "resource_name": "departement",
+      "done": true
     },
     {
       "name": "Etablissements scolaires",
@@ -17,6 +18,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "scolaire",
+      "done": false,
       "schema": {
         "name_col": 1,
         "street_col": 5,
@@ -25,7 +27,7 @@
         "insee_col": 25,
         "postal_col": 8,
         "type_col": 19,
-        "longitude_col": 13,
+        "longitude_col": 15,
         "latitude_col": 14
       }
     },
@@ -37,6 +39,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "administration",
+      "done": false,
       "schema": {
         "name_col": 4,
         "street_col": 10,
@@ -56,6 +59,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "culturel",
+      "done": false,
       "schema": {
         "name_col": 1,
         "street_col": 3,
@@ -64,8 +68,8 @@
         "insee_col": 6,
         "postal_col": 4,
         "type_col": 9,
-        "longitude_col": 48,
-        "latitude_col": 47
+        "longitude_col": 49,
+        "latitude_col": 48
       }
     },
     {
@@ -75,6 +79,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "gare",
+      "done": false,
       "schema": {
         "name_col": 4,
         "street_col": null,
@@ -94,6 +99,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "hopital",
+      "done": false,
       "schema": {
         "name_col": 2,
         "street_col": 9,
@@ -113,6 +119,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "poste",
+      "done": false,
       "schema": {
         "name_col": 0,
         "street_col": 2,
@@ -121,8 +128,8 @@
         "insee_col": null,
         "postal_col": 6,
         "type_col": 1,
-        "longitude_col": 10,
-        "latitude_col": 9
+        "longitude_col": 9,
+        "latitude_col": 8
       }
     },
     {
@@ -132,6 +139,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "pharmacie",
+      "done": false,
       "schema": {
         "name_col": 1,
         "street_col": 2,
@@ -151,6 +159,7 @@
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "police",
+      "done": false,
       "schema": {
         "name_col": 0,
         "street_col": 5,
@@ -166,10 +175,11 @@
     {
       "name": "Equipement sportif",
       "url_ref": "https://www.data.gouv.fr/fr/datasets/les-installations-sportives-d-ile-de-france-idf/",
-      "url_file": "https://www.data.gouv.fr/fr/datasets/r/2cb2f356-42b2-4195-a35c-d4e4d986c62b",
+      "url_file": "https://www.data.gouv.fr/fr/datasets/r/09840541-a11c-4a6b-a78b-c40b93171e82",
       "format": "csv",
       "resource_type": "poi",
       "resource_name": "sport",
+      "done": false,
       "schema": {
         "name_col": 2,
         "street_col": null,
